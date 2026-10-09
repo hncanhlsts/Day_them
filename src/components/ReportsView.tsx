@@ -3,9 +3,10 @@ import { TOP_CONTRIBUTING_STUDENTS } from '../data/mockData';
 
 interface ReportsViewProps {
   onShowToast: (msg: string) => void;
+  onOpenAppsScript?: () => void;
 }
 
-export const ReportsView: React.FC<ReportsViewProps> = ({ onShowToast }) => {
+export const ReportsView: React.FC<ReportsViewProps> = ({ onShowToast, onOpenAppsScript }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('Tháng 10/2023');
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedBar, setSelectedBar] = useState<string>('T10');
@@ -406,6 +407,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onShowToast }) => {
             <span>Xuất Excel</span>
           </button>
         </div>
+
+        <button
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-surface-container text-primary font-label-md text-label-md font-bold hover:bg-surface-container-high transition-colors border border-surface-container-highest"
+          type="button"
+          onClick={onOpenAppsScript}
+        >
+          <span className="material-symbols-outlined text-[18px]">terminal</span>
+          <span>Mở Trung Tâm Google Apps Script &amp; Sheets</span>
+        </button>
       </section>
     </div>
   );

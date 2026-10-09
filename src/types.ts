@@ -80,3 +80,18 @@ export interface PaymentReceipt {
   timeText: string;
   amount: number;
 }
+
+export interface TutorProfile {
+  name: string;
+  fullName: string;
+  title: string;
+  avatarUrl: string;
+  heroAvatarUrl: string;
+  logoUrl: string;
+  bankName: string;
+  bankCode: string;
+  accountNumber: string;
+  accountNumberRaw: string;
+  accountHolder: string;
+  qrCodeUrl?: string;
+}

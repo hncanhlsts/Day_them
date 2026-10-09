@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
-import { TUTOR_PROFILE, INITIAL_SESSIONS } from '../data/mockData';
-import { ClassSession } from '../types';
+import { ClassSession, TutorProfile } from '../types';
 
 interface ScheduleViewProps {
+  tutorProfile: TutorProfile;
+  sessions: ClassSession[];
   onOpenAttendance: (studentId: string, sessionId: string) => void;
   onOpenReschedule: (sessionId?: string) => void;
+  onOpenAddSession: () => void;
   onOpenCreateClass: () => void;
+  onOpenProfile: () => void;
   onShowToast: (msg: string) => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
+  tutorProfile,
+  sessions,
   onOpenAttendance,
   onOpenReschedule,
+  onOpenAddSession,
   onOpenCreateClass,
+  onOpenProfile,
   onShowToast,
 }) => {
   const [selectedDay, setSelectedDay] = useState<number>(24);
-  const [sessions, setSessions] = useState<ClassSession[]>(INITIAL_SESSIONS);
 
   const daysOfWeek = [
     { label: 'T2', date: 22, hasDot: true, dotColor: 'bg-outline-variant' },
@@ -32,35 +38,68 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     if (session.onlineLink) {
       onShowToast(`Đang kết nối phòng học trực tuyến của em ${session.studentName}...`);
       window.open(session.onlineLink, '_blank', 'noopener,noreferrer');
+    } else {
+      onShowToast(`Mở phòng học trực tuyến cho ${session.studentName}`);
     }
   };
 
+  const pendingSessionsCount = sessions.filter((s) => s.status !== 'completed').length;
+  const completedSessionsCount = sessions.filter((s) => s.status === 'completed').length;
+
   return (
-    <div className="flex flex-col w-full max-w-xl mx-auto px-4 pb-28 pt-20 gap-4">
+    <div className="flex flex-col w-full max-w-xl mx-auto px-4 pb-32 pt-20 gap-4">
       {/* Header / Greeting Section */}
       <div className="flex items-center justify-between pt-1">
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
             <span className="material-symbols-outlined text-[16px] text-primary">calendar_month</span>
             <span>Thứ Tư, 24 Tháng 10</span>
           </div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-0.5">
-            Chào buổi chiều, Thầy Tuấn Anh <span className="inline-block animate-pulse">👋</span>
-          </h1>
+          <div className="flex items-center gap-1 mt-0.5 group cursor-pointer" onClick={onOpenProfile}>
+            <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight group-hover:text-primary transition-colors">
+              Chào buổi chiều, {tutorProfile.name} <span className="inline-block animate-pulse">👋</span>
+            </h1>
+            <span className="material-symbols-outlined text-outline group-hover:text-primary text-[18px]" title="Chỉnh sửa hồ sơ & tên">
+              edit
+            </span>
+          </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
-            Bạn có <span className="font-bold text-primary">2 ca dạy</span> đang chờ hôm nay. Cố lên nhé!
+            Bạn có <span className="font-bold text-primary">{pendingSessionsCount} ca dạy</span> đang chờ hôm nay. Cố lên nhé!
           </p>
         </div>
-        <div className="relative shrink-0">
-          <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm bg-surface-container-high p-0.5">
+
+        {/* Profile Avatar trigger */}
+        <div className="relative shrink-0 cursor-pointer active:scale-95 transition-transform" onClick={onOpenProfile} title="Cài đặt tên & mã QR Bank">
+          <div className="w-13 h-13 rounded-full overflow-hidden shadow-sm bg-surface-container-high p-0.5 ring-2 ring-primary/30">
             <img 
               alt="Portrait photo of tutor" 
               className="w-full h-full rounded-full object-cover" 
-              src={TUTOR_PROFILE.heroAvatarUrl}
+              src={tutorProfile.heroAvatarUrl || tutorProfile.avatarUrl}
             />
           </div>
           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-secondary rounded-full ring-2 ring-surface-container-lowest"></span>
         </div>
+      </div>
+
+      {/* QUICK INLINE ACTION STRIP (Always visible and unmissable) */}
+      <div className="grid grid-cols-2 gap-2 bg-surface-container-low p-2 rounded-2xl border border-surface-container">
+        <button
+          type="button"
+          onClick={onOpenAddSession}
+          className="h-11 px-3 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all hover:bg-primary-container"
+        >
+          <span className="material-symbols-outlined text-[18px]">add_circle</span>
+          <span>Thêm ca dạy bù / mới</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="h-11 px-3 rounded-xl bg-surface-container-lowest text-primary font-bold text-xs flex items-center justify-center gap-1.5 border border-surface-container-high hover:bg-surface-container transition-all active:scale-95 shadow-xs"
+        >
+          <span className="material-symbols-outlined text-[18px]">qr_code</span>
+          <span>Cài đặt QR Bank &amp; Tên</span>
+        </button>
       </div>
 
       {/* Weekly Calendar Strip */}
@@ -70,7 +109,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <span className="material-symbols-outlined text-[18px] text-primary">event_upcoming</span>
             <span>Tuần này (22/10 - 28/10)</span>
           </div>
-          <span className="font-label-sm text-label-sm text-on-surface-variant">Tháng 10</span>
+          <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">Tháng 10</span>
         </div>
         <div className="grid grid-cols-7 gap-1 text-center">
           {daysOfWeek.map((day) => {
@@ -80,7 +119,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 key={day.date}
                 className={`flex flex-col items-center py-2 px-1 rounded-xl transition-all ${
                   isSelected
-                    ? 'bg-primary-container text-on-primary shadow-md'
+                    ? 'bg-primary-container text-on-primary shadow-md font-bold'
                     : 'hover:bg-surface-container-high text-on-surface-variant'
                 }`}
                 type="button"
@@ -120,15 +159,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </div>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="font-amount-display text-amount-display text-on-surface">
-                3 <span className="font-headline-sm text-headline-sm text-on-surface-variant font-normal">ca</span>
+                {sessions.length} <span className="font-headline-sm text-headline-sm text-on-surface-variant font-normal">ca</span>
               </span>
               <span className="font-label-sm text-label-sm text-secondary bg-secondary-container/60 px-2 py-0.5 rounded-full font-bold">
-                1 xong • 2 chờ
+                {completedSessionsCount} xong • {pendingSessionsCount} chờ
               </span>
             </div>
             <div className="w-full bg-surface-container-highest h-2 rounded-full mt-2.5 overflow-hidden flex">
-              <div className="bg-secondary h-full rounded-full transition-all" style={{ width: '33.3%' }}></div>
-              <div className="bg-tertiary-fixed-dim h-full" style={{ width: '66.7%' }}></div>
+              <div className="bg-secondary h-full rounded-full transition-all" style={{ width: `${(completedSessionsCount / Math.max(1, sessions.length)) * 100}%` }}></div>
+              <div className="bg-tertiary-fixed-dim h-full" style={{ width: `${(pendingSessionsCount / Math.max(1, sessions.length)) * 100}%` }}></div>
             </div>
           </div>
           <div className="shrink-0 w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed ml-3 shadow-inner">
@@ -168,185 +207,161 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <span className="text-secondary font-bold">+12%</span> vs tháng trước
             </div>
           </div>
-          <span className="font-label-sm text-label-sm text-on-surface-variant mt-2">Tháng 10/2023</span>
+          <span className="font-label-sm text-label-sm text-on-surface-variant mt-2 font-semibold">Tháng 10/2023</span>
         </div>
       </div>
 
-      {/* Timeline Section Title */}
+      {/* Timeline Section Title with Action Button */}
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-[22px] text-primary">schedule</span>
           <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">Lịch dạy hôm nay</h2>
         </div>
-        <span className="font-label-md text-label-md text-primary bg-primary-fixed px-2.5 py-0.5 rounded-full font-bold">
-          3 ca (4.5 giờ)
-        </span>
+        <button
+          type="button"
+          onClick={onOpenAddSession}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm active:scale-95 transition-all"
+        >
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          <span>Thêm ca dạy</span>
+        </button>
       </div>
 
       {/* Timeline List */}
       <div className="flex flex-col gap-3 relative">
-        {/* Item 1: COMPLETED */}
-        <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container-high/50 flex flex-col gap-3 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
-              <span className="font-headline-sm text-headline-sm text-on-surface font-bold">08:30 – 10:00</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">90 phút</span>
-            </div>
-            <span className="font-label-sm text-label-sm text-secondary bg-secondary-container px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
-              Đã hoàn thành
-            </span>
-          </div>
+        {sessions.map((session, index) => {
+          const isCompleted = session.status === 'completed';
+          const isSoon = session.status === 'upcoming_soon';
 
-          <div className="flex items-start gap-3 bg-surface-container-low p-3 rounded-xl">
-            <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px] text-primary">functions</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-label-lg text-label-lg text-on-surface font-bold truncate">Toán nâng cao 9</span>
-                <span className="font-label-sm text-label-sm text-on-primary-fixed-variant bg-primary-fixed px-1.5 py-0.5 rounded font-bold">Lớp 9</span>
-              </div>
-              <p className="font-body-md text-body-md text-on-surface mt-0.5 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-on-surface-variant">person</span>
-                Học sinh: <span className="font-bold">Minh Khang</span>
-              </p>
-              <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5 truncate">
-                <span className="material-symbols-outlined text-[15px] text-error">home_pin</span>
-                120 Hoàng Hoa Thám, Ba Đình
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-1">
-            <span className="font-label-sm text-label-sm text-on-surface-variant">
-              Học phí: <strong className="text-on-surface">300.000 đ</strong> (Đã ghi nợ)
-            </span>
-            <button 
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high text-on-primary-fixed-variant hover:bg-surface-container-highest transition-colors font-label-md text-label-md font-semibold active:scale-95"
-              type="button"
-              onClick={() => onOpenAttendance('stu-1', 'ses-1')}
+          return (
+            <div
+              key={session.id}
+              className={`bg-surface-container-lowest rounded-2xl p-4 shadow-sm border flex flex-col gap-3 relative overflow-hidden ${
+                isSoon ? 'border-2 border-tertiary-fixed-dim/80' : 'border-surface-container-high/50'
+              }`}
             >
-              <span className="material-symbols-outlined text-[16px]">rate_review</span>
-              <span>Xem đánh giá</span>
-            </button>
-          </div>
-        </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`material-symbols-outlined text-[18px] ${
+                      isCompleted ? 'text-secondary' : isSoon ? 'text-tertiary animate-spin' : 'text-on-surface-variant'
+                    }`}
+                  >
+                    {isCompleted ? 'check_circle' : isSoon ? 'alarm' : 'schedule'}
+                  </span>
+                  <span className="font-headline-sm text-headline-sm text-on-surface font-bold">{session.timeRange}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded font-semibold">
+                    {session.durationMinutes} phút
+                  </span>
+                </div>
 
-        {/* Item 2: UPCOMING SOON */}
-        <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-md border-2 border-tertiary-fixed-dim/80 flex flex-col gap-3 relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-tertiary animate-spin">alarm</span>
-              <span className="font-headline-sm text-headline-sm text-on-surface font-bold">15:00 – 16:30</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">90 phút</span>
-            </div>
-            <span className="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold animate-pulse">
-              Sắp diễn ra sau 30p
-            </span>
-          </div>
-
-          <div className="flex items-start gap-3 bg-surface-container-low p-3 rounded-xl">
-            <div className="w-11 h-11 rounded-xl bg-secondary-fixed flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px] text-on-secondary-fixed">bolt</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-label-lg text-label-lg text-on-surface font-bold truncate">Vật lý 10 – Động học</span>
-                <span className="font-label-sm text-label-sm text-secondary bg-secondary-container px-1.5 py-0.5 rounded font-bold">Online</span>
+                {isCompleted ? (
+                  <span className="font-label-sm text-label-sm text-secondary bg-secondary-container px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold">
+                    Đã hoàn thành
+                  </span>
+                ) : isSoon ? (
+                  <span className="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold animate-pulse">
+                    {session.statusText}
+                  </span>
+                ) : (
+                  <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-2.5 py-0.5 rounded-full font-bold">
+                    {session.statusText}
+                  </span>
+                )}
               </div>
-              <p className="font-body-md text-body-md text-on-surface mt-0.5 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-on-surface-variant">person</span>
-                Học sinh: <span className="font-bold">Hải Đăng</span>
-              </p>
-              <p className="font-body-sm text-body-sm text-primary flex items-center gap-1 mt-0.5 truncate">
-                <span className="material-symbols-outlined text-[15px]">videocam</span>
-                Google Meet: meet.google.com/xyz-tuand-edu
-              </p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button 
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-colors font-label-md text-label-md font-bold shadow-sm active:scale-95"
-              type="button"
-              onClick={() => handleEnterOnlineRoom(sessions[1])}
-            >
-              <span className="material-symbols-outlined text-[18px]">video_call</span>
-              <span>Vào phòng học</span>
-            </button>
-            <button 
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed-dim transition-colors font-label-md text-label-md font-bold shadow-sm active:scale-95"
-              type="button"
-              onClick={() => onOpenAttendance('stu-3', 'ses-2')}
-            >
-              <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
-              <span>Điểm danh</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Item 3: TONIGHT */}
-        <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container-high/50 flex flex-col gap-3 relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-on-surface-variant">bedtime</span>
-              <span className="font-headline-sm text-headline-sm text-on-surface font-bold">18:30 – 20:00</span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">90 phút</span>
-            </div>
-            <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-2.5 py-0.5 rounded-full font-bold">
-              18:30 tối nay
-            </span>
-          </div>
-
-          <div className="flex items-start gap-3 bg-surface-container-low p-3 rounded-xl">
-            <div className="w-11 h-11 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-[24px] text-tertiary">science</span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-label-lg text-label-lg text-on-surface font-bold truncate">Hóa học 11 – Phản ứng Oxi hóa</span>
-                <span className="font-label-sm text-label-sm text-on-tertiary-fixed-variant bg-tertiary-fixed px-1.5 py-0.5 rounded font-bold">Nhóm 3</span>
+              <div className="flex items-start gap-3 bg-surface-container-low p-3 rounded-xl border border-surface-container">
+                <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px] text-primary">
+                    {session.locationType === 'online' ? 'bolt' : session.subject.includes('Hóa') ? 'science' : 'functions'}
+                  </span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-label-lg text-label-lg text-on-surface font-bold truncate">{session.subject}</span>
+                    <span className="font-label-sm text-label-sm text-on-primary-fixed-variant bg-primary-fixed px-1.5 py-0.5 rounded font-bold">
+                      {session.gradeBadge}
+                    </span>
+                  </div>
+                  <p className="font-body-md text-body-md text-on-surface mt-0.5 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[16px] text-on-surface-variant">person</span>
+                    Học sinh: <span className="font-bold">{session.studentName}</span>
+                  </p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5 truncate">
+                    <span className="material-symbols-outlined text-[15px] text-error">
+                      {session.locationType === 'online' ? 'videocam' : 'home_pin'}
+                    </span>
+                    {session.location}
+                  </p>
+                </div>
               </div>
-              <p className="font-body-md text-body-md text-on-surface mt-0.5 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px] text-on-surface-variant">groups</span>
-                Nhóm 3 bạn: <span className="font-bold">Lan, Duy, Tuấn</span>
-              </p>
-              <p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5 truncate">
-                <span className="material-symbols-outlined text-[15px] text-primary">meeting_room</span>
-                Phòng 201 - Studio Gia Sư (Tầng 2)
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1 font-label-md text-label-md text-primary font-bold">
-              <span className="material-symbols-outlined text-[18px]">sell</span>
-              <span>250.000 đ / buổi / bạn</span>
+              {/* Action Buttons based on status */}
+              {isCompleted ? (
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">
+                    Học phí: <strong className="text-on-surface">{session.fee.toLocaleString('vi-VN')} đ</strong> ({session.feeNote})
+                  </span>
+                  <button 
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high text-on-primary-fixed-variant hover:bg-surface-container-highest transition-colors font-label-md text-label-md font-semibold active:scale-95"
+                    type="button"
+                    onClick={() => onOpenAttendance('stu-1', session.id)}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">rate_review</span>
+                    <span>Xem đánh giá</span>
+                  </button>
+                </div>
+              ) : isSoon ? (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button 
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-primary-container text-on-primary hover:bg-primary transition-colors font-label-md text-label-md font-bold shadow-sm active:scale-95"
+                    type="button"
+                    onClick={() => handleEnterOnlineRoom(session)}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">video_call</span>
+                    <span>Vào phòng học</span>
+                  </button>
+                  <button 
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary-fixed-dim transition-colors font-label-md text-label-md font-bold shadow-sm active:scale-95"
+                    type="button"
+                    onClick={() => onOpenAttendance('stu-3', session.id)}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+                    <span>Điểm danh</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-1 font-label-md text-label-md text-primary font-bold">
+                    <span className="material-symbols-outlined text-[18px]">sell</span>
+                    <span>{session.fee.toLocaleString('vi-VN')} đ</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-tertiary-fixed/40 text-on-tertiary-fixed-variant hover:bg-tertiary-fixed transition-colors font-label-md text-label-md font-semibold active:scale-95"
+                      type="button"
+                      onClick={() => onOpenReschedule(session.id)}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">event_busy</span>
+                      <span>Báo nghỉ / Đổi</span>
+                    </button>
+                    <button 
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-label-md text-label-md font-semibold active:scale-95"
+                      type="button"
+                      onClick={() => onOpenAttendance('stu-4', session.id)}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">more_horiz</span>
+                      <span>Chi tiết</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <button 
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-tertiary-fixed/40 text-on-tertiary-fixed-variant hover:bg-tertiary-fixed transition-colors font-label-md text-label-md font-semibold active:scale-95"
-                type="button"
-                onClick={() => onOpenReschedule('ses-3')}
-              >
-                <span className="material-symbols-outlined text-[16px]">event_busy</span>
-                <span>Báo nghỉ / Đổi</span>
-              </button>
-              <button 
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-label-md text-label-md font-semibold active:scale-95"
-                type="button"
-                onClick={() => onOpenAttendance('stu-4', 'ses-3')}
-              >
-                <span className="material-symbols-outlined text-[16px]">more_horiz</span>
-                <span>Chi tiết</span>
-              </button>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {/* Motivational Quote / Micro-delight Banner */}
+      {/* Motivational Quote Banner */}
       <div className="bg-primary-fixed/40 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm border border-primary-fixed">
         <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0">
           <span className="material-symbols-outlined text-[20px]">lightbulb</span>
@@ -359,12 +374,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       </div>
 
-      {/* Floating Quick Action Button (FAB) */}
-      <div className="fixed bottom-20 right-4 z-40 max-w-xl mx-auto">
+      {/* Floating Action Button (FAB) - Clear, Elevated, Never Covered */}
+      <div className="fixed bottom-24 right-4 z-40">
         <button 
-          className="flex items-center gap-2 h-14 px-5 rounded-full bg-primary-container text-on-primary shadow-xl hover:bg-primary transition-all active:scale-95 group ring-4 ring-white/50"
+          className="flex items-center gap-2 h-14 px-5 rounded-full bg-primary-container text-on-primary shadow-2xl hover:bg-primary transition-all active:scale-95 group ring-4 ring-white/80"
           type="button"
-          onClick={onOpenCreateClass}
+          onClick={onOpenAddSession}
+          title="Thêm ca dạy bù hoặc ca mới"
         >
           <span className="material-symbols-outlined text-[24px] group-hover:rotate-90 transition-transform">add</span>
           <span className="font-label-lg text-label-lg font-bold pr-1">Thêm ca dạy bù / mới</span>

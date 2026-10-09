@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { TUTOR_PROFILE } from '../data/mockData';
-import { Invoice } from '../types';
+import { Invoice, TutorProfile } from '../types';
 
 interface VietQRModalProps {
   invoice: Invoice | null;
   onClose: () => void;
   onShowToast: (msg: string) => void;
   onMarkPaid?: (invoice: Invoice) => void;
+  tutorProfile?: TutorProfile;
 }
 
 export const VietQRModal: React.FC<VietQRModalProps> = ({
@@ -14,9 +15,11 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
   onClose,
   onShowToast,
   onMarkPaid,
+  tutorProfile,
 }) => {
   if (!invoice) return null;
 
+  const tutor = tutorProfile || TUTOR_PROFILE;
   const [balanceScenario, setBalanceScenario] = useState<'surplus' | 'deficit' | 'exact'>('surplus');
   const [isEditingZalo, setIsEditingZalo] = useState(false);
 
@@ -58,9 +61,15 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
     }
   };
 
+  const cleanAccount = tutor.accountNumberRaw || tutor.accountNumber.replace(/\s+/g, '');
+  const vietQrApiUrl = `https://img.vietqr.io/image/${tutor.bankCode || 'MB'}-${cleanAccount}-compact2.png?amount=${finalDueAmount}&addInfo=${encodeURIComponent(
+    invoice.bankMemo
+  )}&accountName=${encodeURIComponent(tutor.accountHolder)}`;
+  const displayQrUrl = tutor.qrCodeUrl || vietQrApiUrl;
+
   const copyAccountNumber = () => {
-    navigator.clipboard?.writeText(TUTOR_PROFILE.accountNumberRaw);
-    onShowToast(`Đã sao chép số tài khoản: ${TUTOR_PROFILE.accountNumberRaw}`);
+    navigator.clipboard?.writeText(cleanAccount);
+    onShowToast(`Đã sao chép số tài khoản: ${cleanAccount}`);
   };
 
   const copyMemo = () => {
@@ -317,7 +326,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                   </span>
                 </div>
                 <div className="bg-surface-container-lowest/20 backdrop-blur-sm px-2 py-1 rounded-md text-surface-bright font-label-md text-label-md font-bold">
-                  MBBank
+                  {tutor.bankCode || 'MBBank'}
                 </div>
               </div>
               <div className="flex items-center gap-1 text-on-primary-container font-label-sm text-label-sm">
@@ -327,56 +336,46 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
             </div>
 
             {/* Sharp Centered QR Code Box */}
-            <div className="relative bg-surface-container-lowest p-3.5 rounded-2xl shadow-lg flex flex-col items-center justify-center my-1">
-              <svg className="w-44 h-44 text-on-surface" fill="currentColor" viewBox="0 0 160 160">
-                {/* Finders */}
-                <rect fill="#131b2e" height="40" rx="6" width="40" x="10" y="10"></rect>
-                <rect fill="#ffffff" height="28" rx="3" width="28" x="16" y="16"></rect>
-                <rect fill="#2a14b4" height="16" rx="2" width="16" x="22" y="22"></rect>
-
-                <rect fill="#131b2e" height="40" rx="6" width="40" x="110" y="10"></rect>
-                <rect fill="#ffffff" height="28" rx="3" width="28" x="116" y="16"></rect>
-                <rect fill="#2a14b4" height="16" rx="2" width="16" x="122" y="22"></rect>
-
-                <rect fill="#131b2e" height="40" rx="6" width="40" x="10" y="110"></rect>
-                <rect fill="#ffffff" height="28" rx="3" width="28" x="16" y="116"></rect>
-                <rect fill="#2a14b4" height="16" rx="2" width="16" x="22" y="122"></rect>
-
-                {/* Matrix Pixels */}
-                <rect height="8" rx="1.5" width="8" x="60" y="14"></rect>
-                <rect height="8" rx="1.5" width="8" x="74" y="14"></rect>
-                <rect height="8" rx="1.5" width="8" x="88" y="14"></rect>
-                <rect height="6" rx="1" width="14" x="60" y="28"></rect>
-                <rect height="6" rx="1" width="18" x="80" y="28"></rect>
-                <rect height="8" rx="1.5" width="8" x="60" y="40"></rect>
-                <rect height="8" rx="1.5" width="22" x="74" y="40"></rect>
-                <rect height="14" rx="1" width="8" x="14" y="60"></rect>
-                <rect height="8" rx="1" width="14" x="28" y="60"></rect>
-                <rect height="8" rx="1" width="8" x="48" y="60"></rect>
-                <rect height="8" rx="1" width="14" x="114" y="60"></rect>
-                <rect height="8" rx="1" width="14" x="134" y="60"></rect>
-
-                {/* Center brand badge */}
-                <rect fill="#2a14b4" height="28" rx="6" width="28" x="66" y="66"></rect>
-                <circle cx="80" cy="80" fill="#ffffff" r="10"></circle>
-                <path d="M76 83L80 75L84 83H81.5L80 79.5L78.5 83H76Z" fill="#2a14b4"></path>
-
-                <rect height="8" rx="1" width="14" x="14" y="80"></rect>
-                <rect height="14" rx="1" width="8" x="34" y="80"></rect>
-                <rect height="8" rx="1" width="12" x="48" y="80"></rect>
-                <rect height="8" rx="1" width="18" x="104" y="80"></rect>
-                <rect height="8" rx="1" width="18" x="128" y="80"></rect>
-                <rect height="8" rx="1" width="14" x="60" y="102"></rect>
-                <rect height="16" rx="1" width="8" x="80" y="102"></rect>
-                <rect height="8" rx="1" width="14" x="94" y="102"></rect>
-                <rect height="8" rx="1" width="8" x="114" y="102"></rect>
-                <rect height="8" rx="1" width="18" x="128" y="102"></rect>
-                <rect height="24" rx="1.5" width="8" x="60" y="120"></rect>
-                <rect height="8" rx="1" width="18" x="74" y="126"></rect>
-                <rect height="14" rx="1" width="14" x="98" y="120"></rect>
-                <rect height="8" rx="1" width="28" x="118" y="126"></rect>
-                <rect height="8" rx="1" width="20" x="126" y="140"></rect>
-              </svg>
+            <div className="relative bg-surface-container-lowest p-3 rounded-2xl shadow-lg flex flex-col items-center justify-center my-1 w-52 min-h-52 overflow-hidden">
+              <img
+                src={displayQrUrl}
+                alt="VietQR Mã Thanh Toán"
+                className="w-44 h-44 object-contain rounded-lg"
+                onError={(e) => {
+                  // If image fails, fallback to vector QR
+                  (e.target as HTMLElement).style.display = 'none';
+                  const fb = document.getElementById('vector-qr-fallback');
+                  if (fb) fb.style.display = 'block';
+                }}
+              />
+              <div id="vector-qr-fallback" style={{ display: 'none' }}>
+                <svg className="w-44 h-44 text-on-surface" fill="currentColor" viewBox="0 0 160 160">
+                  <rect fill="#131b2e" height="40" rx="6" width="40" x="10" y="10"></rect>
+                  <rect fill="#ffffff" height="28" rx="3" width="28" x="16" y="16"></rect>
+                  <rect fill="#2a14b4" height="16" rx="2" width="16" x="22" y="22"></rect>
+                  <rect fill="#131b2e" height="40" rx="6" width="40" x="110" y="10"></rect>
+                  <rect fill="#ffffff" height="28" rx="3" width="28" x="116" y="16"></rect>
+                  <rect fill="#2a14b4" height="16" rx="2" width="16" x="122" y="22"></rect>
+                  <rect fill="#131b2e" height="40" rx="6" width="40" x="10" y="110"></rect>
+                  <rect fill="#ffffff" height="28" rx="3" width="28" x="16" y="116"></rect>
+                  <rect fill="#2a14b4" height="16" rx="2" width="16" x="22" y="122"></rect>
+                  <rect height="8" rx="1.5" width="8" x="60" y="14"></rect>
+                  <rect height="8" rx="1.5" width="8" x="74" y="14"></rect>
+                  <rect height="8" rx="1.5" width="8" x="88" y="14"></rect>
+                  <rect height="6" rx="1" width="14" x="60" y="28"></rect>
+                  <rect height="6" rx="1" width="18" x="80" y="28"></rect>
+                  <rect height="8" rx="1.5" width="8" x="60" y="40"></rect>
+                  <rect height="8" rx="1.5" width="22" x="74" y="40"></rect>
+                  <rect height="14" rx="1" width="8" x="14" y="60"></rect>
+                  <rect height="8" rx="1" width="14" x="28" y="60"></rect>
+                  <rect height="8" rx="1" width="8" x="48" y="60"></rect>
+                  <rect height="8" rx="1" width="14" x="114" y="60"></rect>
+                  <rect height="8" rx="1" width="14" x="134" y="60"></rect>
+                  <rect fill="#2a14b4" height="28" rx="6" width="28" x="66" y="66"></rect>
+                  <circle cx="80" cy="80" fill="#ffffff" r="10"></circle>
+                  <path d="M76 83L80 75L84 83H81.5L80 79.5L78.5 83H76Z" fill="#2a14b4"></path>
+                </svg>
+              </div>
               <div className="text-on-surface-variant font-label-sm text-label-sm mt-2 flex items-center gap-1 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
                 Tự động điền tiền &amp; lời nhắn
@@ -388,14 +387,14 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
               <div className="flex items-center justify-between text-body-sm font-body-sm">
                 <span className="text-on-primary-container">Chủ tài khoản:</span>
                 <span className="font-label-lg text-label-lg tracking-wide uppercase font-bold">
-                  {TUTOR_PROFILE.accountHolder}
+                  {tutor.accountHolder}
                 </span>
               </div>
               <div className="flex items-center justify-between text-body-sm font-body-sm">
                 <span className="text-on-primary-container">Số tài khoản:</span>
                 <div className="flex items-center gap-1.5">
                   <span className="font-headline-sm text-headline-sm font-mono tracking-wider font-bold">
-                    {TUTOR_PROFILE.accountNumber}
+                    {tutor.accountNumber}
                   </span>
                   <button
                     className="p-1 rounded bg-surface-container-lowest/20 hover:bg-surface-container-lowest/30 transition-colors"
@@ -409,7 +408,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
               </div>
               <div className="flex items-center justify-between text-body-sm font-body-sm">
                 <span className="text-on-primary-container">Ngân hàng:</span>
-                <span className="font-label-md text-label-md font-semibold">{TUTOR_PROFILE.bankName}</span>
+                <span className="font-label-md text-label-md font-semibold">{tutor.bankName}</span>
               </div>
               <div className="flex items-center justify-between text-body-sm font-body-sm">
                 <span className="text-on-primary-container">Số tiền:</span>

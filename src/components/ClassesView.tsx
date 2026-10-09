@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
-import { INITIAL_STUDENTS } from '../data/mockData';
 import { Student } from '../types';
 
 interface ClassesViewProps {
+  students: Student[];
   onOpenStudentDetail: (student: Student) => void;
+  onEditStudent: (student: Student) => void;
+  onDeleteStudent?: (studentId: string) => void;
+  onResetMockStudents?: () => void;
   onOpenCreateClass: () => void;
   onShowToast: (msg: string) => void;
 }
 
 export const ClassesView: React.FC<ClassesViewProps> = ({
+  students,
   onOpenStudentDetail,
+  onEditStudent,
+  onDeleteStudent,
+  onResetMockStudents,
   onOpenCreateClass,
   onShowToast,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | '1-on-1' | 'group' | 'urgent'>('all');
-  const [students] = useState<Student[]>(INITIAL_STUDENTS);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   const filteredStudents = students.filter((s) => {
     const matchesFilter =
@@ -39,27 +46,40 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
     <div className="flex flex-col w-full max-w-xl mx-auto px-4 pb-28 pt-20 gap-4">
       {/* Top Search & Filter Module */}
       <section className="flex flex-col gap-3">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
-            <span className="material-symbols-outlined text-[20px]">search</span>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+              <span className="material-symbols-outlined text-[20px]">search</span>
+            </div>
+            <input
+              className="w-full h-12 pl-11 pr-10 rounded-2xl bg-surface-container-lowest border border-surface-container-high/60 shadow-sm text-body-md font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              placeholder="Tìm học sinh, lớp học, môn học..."
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                aria-label="Xóa tìm kiếm"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface"
+                type="button"
+                onClick={() => setSearchQuery('')}
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+              </button>
+            )}
           </div>
-          <input
-            className="w-full h-12 pl-11 pr-10 rounded-2xl bg-surface-container-lowest border border-surface-container-high/60 shadow-sm text-body-md font-body-md text-on-surface placeholder:text-outline focus:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            placeholder="Tìm học sinh, lớp học, môn học..."
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              aria-label="Xóa tìm kiếm"
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-outline hover:text-on-surface"
-              type="button"
-              onClick={() => setSearchQuery('')}
-            >
-              <span className="material-symbols-outlined text-[18px]">cancel</span>
-            </button>
-          )}
+
+          {/* Quick Add Student Button in Header */}
+          <button
+            type="button"
+            className="h-12 px-3.5 rounded-2xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1 shrink-0 shadow-sm active:scale-95 transition-all hover:bg-primary-container"
+            onClick={onOpenCreateClass}
+            title="Thêm học sinh mới"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="hidden sm:inline">Thêm lớp</span>
+          </button>
         </div>
 
         {/* Filter Pills Horizontal Scroll */}
@@ -73,7 +93,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
             type="button"
             onClick={() => setActiveFilter('all')}
           >
-            Tất cả (8)
+            Tất cả ({students.length})
           </button>
           <button
             className={`flex-shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all ${
@@ -84,7 +104,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
             type="button"
             onClick={() => setActiveFilter('1-on-1')}
           >
-            Lớp 1-kèm-1 (5)
+            1-kèm-1
           </button>
           <button
             className={`flex-shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all ${
@@ -95,97 +115,110 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
             type="button"
             onClick={() => setActiveFilter('group')}
           >
-            Nhóm nhỏ (2)
+            Nhóm nhỏ
           </button>
           <button
             className={`flex-shrink-0 px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all ${
               activeFilter === 'urgent'
-                ? 'bg-primary-container text-on-primary shadow-sm font-bold'
+                ? 'bg-error-container text-on-error-container shadow-sm font-bold'
                 : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container border border-surface-container-high/50'
             }`}
             type="button"
             onClick={() => setActiveFilter('urgent')}
           >
-            Luyện thi cấp tốc (1)
+            Cần lưu ý
           </button>
         </div>
       </section>
 
       {/* Overview Metrics Banner */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-container p-4 text-on-primary shadow-md">
-        <div className="absolute -right-6 -bottom-8 w-32 h-32 rounded-full bg-on-primary/10 blur-xl pointer-events-none"></div>
-        <div className="absolute right-4 top-2 w-16 h-16 rounded-full bg-secondary-container/20 blur-md pointer-events-none"></div>
-        
-        <div className="relative z-10 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-flex p-1 rounded-lg bg-on-primary/15 backdrop-blur-sm">
-                <span className="material-symbols-outlined text-[18px] text-primary-fixed">school</span>
+      {students.length > 0 && (
+        <section className="bg-gradient-to-br from-primary-container to-primary text-on-primary rounded-2xl p-4 shadow-md relative overflow-hidden">
+          <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+
+          <div className="flex items-center justify-between pb-3 border-b border-white/20">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">calendar_month</span>
+              <span className="font-label-md text-label-md font-semibold tracking-wide">
+                Kỳ giảng dạy: Tháng 10/2024
               </span>
-              <span className="font-label-md text-label-md text-primary-fixed tracking-wide uppercase">Tháng 10 / 2024</span>
             </div>
-            <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error text-on-error font-label-sm text-label-sm shadow-sm animate-pulse">
-              <span className="material-symbols-outlined text-[14px]">notification_important</span>
-              <span>3 sắp thi giữa kỳ</span>
-            </div>
+            <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white font-label-sm text-label-sm font-bold backdrop-blur-xs">
+              {students.length} Lớp đang phụ trách
+            </span>
           </div>
 
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="font-headline-lg text-headline-lg leading-tight font-extrabold tracking-tight">8 lớp đang dạy</div>
-              <p className="font-body-sm text-body-sm text-primary-fixed-dim mt-0.5">Quy mô 12 học sinh hoạt động đều</p>
+          <div className="grid grid-cols-3 gap-2 pt-3">
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm opacity-80">Tổng học sinh</span>
+              <span className="font-headline-sm text-headline-sm font-extrabold mt-0.5">
+                {students.length} em
+              </span>
             </div>
-            <div className="text-right">
-              <div className="font-amount-display text-amount-display leading-none text-secondary-container">26/32</div>
-              <span className="font-label-sm text-label-sm text-primary-fixed block mt-1">Buổi đã hoàn thành</span>
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm opacity-80">Buổi hoàn thành</span>
+              <span className="font-headline-sm text-headline-sm font-extrabold mt-0.5">
+                {students.reduce((acc, cur) => acc + cur.completedSessions, 0)} buổi
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm opacity-80">Tiến độ chung</span>
+              <span className="font-headline-sm text-headline-sm font-extrabold mt-0.5 text-secondary-container">
+                {Math.round(
+                  (students.reduce((acc, cur) => acc + cur.completedSessions, 0) /
+                    Math.max(1, students.reduce((acc, cur) => acc + cur.totalSessions, 0))) *
+                    100
+                )}
+                %
+              </span>
             </div>
           </div>
+        </section>
+      )}
 
-          {/* Monthly Aggregate Progress */}
-          <div className="flex flex-col gap-1.5 pt-1">
-            <div className="w-full h-2 rounded-full bg-on-primary/20 overflow-hidden">
-              <div className="h-full rounded-full bg-secondary-container transition-all duration-700" style={{ width: '81.25%' }}></div>
-            </div>
-            <div className="flex justify-between items-center text-primary-fixed-dim font-label-sm text-label-sm">
-              <span>Tiến độ giảng dạy toàn studio</span>
-              <span className="font-semibold text-secondary-container">81% chỉ tiêu</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Students Roster Section */}
+      {/* Student List Section */}
       <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">
-            Danh sách học sinh
+        <div className="flex items-center justify-between px-1">
+          <h2 className="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-primary text-[18px]">school</span>
+            Danh sách lớp học ({filteredStudents.length})
           </h2>
-          <span className="font-label-md text-label-md text-on-surface-variant bg-surface-container px-3 py-0.5 rounded-full font-semibold">
-            Hiển thị {filteredStudents.length}/{students.length}
-          </span>
+          {students.length > 0 && onResetMockStudents && (
+            <button
+              type="button"
+              className="text-outline hover:text-primary text-xs font-semibold hover:underline flex items-center gap-0.5"
+              onClick={onResetMockStudents}
+              title="Đặt lại danh sách lớp mẫu ban đầu"
+            >
+              <span className="material-symbols-outlined text-[14px]">refresh</span>
+              Đặt lại mẫu
+            </button>
+          )}
         </div>
 
-        {/* Student Cards Stack */}
+        {/* Student Cards Grid */}
         <div className="flex flex-col gap-3">
           {filteredStudents.map((student) => {
             const percentage = Math.round((student.completedSessions / student.totalSessions) * 100);
-            const remainingSessions = student.totalSessions - student.completedSessions;
 
             return (
               <article
                 key={student.id}
-                className="rounded-2xl bg-surface-container-lowest p-4 shadow-sm border border-surface-container-high/50 hover:shadow-md transition-all flex flex-col gap-3"
+                className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-surface-container-high/60 flex flex-col gap-3 transition-all hover:border-primary/40 group relative"
               >
-                {/* Header row: Avatar, Subject & Quick Call */}
+                {/* Card Header: Avatar, Name, Badges & Action Buttons */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative flex-shrink-0 w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary font-headline-md text-headline-md font-bold shadow-inner">
+                  <div
+                    className="flex items-center gap-3 min-w-0 cursor-pointer flex-1"
+                    onClick={() => onEditStudent(student)}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-[16px] shrink-0 relative shadow-sm">
                       {student.initials}
                       <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span>
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface truncate">
+                        <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface truncate group-hover:text-primary transition-colors">
                           {student.name}
                         </h3>
                         {student.statusType === 'urgent' && (
@@ -221,20 +254,48 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Call action trigger */}
-                  <a
-                    aria-label={`Gọi phụ huynh ${student.parentName}`}
-                    className="flex-shrink-0 w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center hover:bg-secondary-container transition-colors shadow-sm active:scale-95"
-                    href={`tel:${student.parentPhone.replace(/[^0-9]/g, '')}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onShowToast(`Đang gọi phụ huynh: ${student.parentName} (${student.parentPhone})`);
-                    }}
-                  >
-                    <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      call
-                    </span>
-                  </a>
+                  {/* Actions: Edit, Delete & Call */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Nút sửa thông tin */}
+                    <button
+                      aria-label="Chỉnh sửa thông tin lớp"
+                      className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center hover:bg-surface-container-high transition-colors shadow-xs active:scale-95"
+                      type="button"
+                      onClick={() => onEditStudent(student)}
+                      title="Chỉnh sửa thông tin lớp học"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+
+                    {/* Nút xóa lớp trực tiếp */}
+                    {onDeleteStudent && (
+                      <button
+                        aria-label="Xóa lớp học"
+                        className="w-9 h-9 rounded-full bg-surface-container text-error flex items-center justify-center hover:bg-error-container hover:text-on-error-container transition-colors shadow-xs active:scale-95"
+                        type="button"
+                        onClick={() => setStudentToDelete(student)}
+                        title="Xóa lớp học này"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    )}
+
+                    {/* Nút gọi phụ huynh */}
+                    <a
+                      aria-label={`Gọi phụ huynh ${student.parentName}`}
+                      className="w-9 h-9 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center hover:bg-secondary-container transition-colors shadow-xs active:scale-95"
+                      href={`tel:${student.parentPhone.replace(/[^0-9]/g, '')}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShowToast(`Đang gọi phụ huynh: ${student.parentName} (${student.parentPhone})`);
+                      }}
+                      title="Gọi điện phụ huynh"
+                    >
+                      <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        call
+                      </span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Metric Details Grid */}
@@ -248,7 +309,11 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                   <div className="flex flex-col">
                     <span className="font-label-sm text-label-sm text-on-surface-variant">Đã học tháng này</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
-                      <span className={`font-headline-sm text-headline-sm font-bold ${percentage === 100 ? 'text-secondary' : 'text-primary'}`}>
+                      <span
+                        className={`font-headline-sm text-headline-sm font-bold ${
+                          percentage === 100 ? 'text-secondary' : 'text-primary'
+                        }`}
+                      >
                         {student.completedSessions}
                       </span>
                       <span className="font-label-md text-label-md text-on-surface-variant">
@@ -262,56 +327,54 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                 <div className="flex flex-col gap-1.5">
                   <div className="flex justify-between items-center font-label-sm text-label-sm">
                     <span className="text-on-surface-variant flex items-center gap-1">
-                      <span className={`material-symbols-outlined text-[14px] ${percentage === 100 ? 'text-secondary' : 'text-primary'}`}>
+                      <span
+                        className={`material-symbols-outlined text-[14px] ${
+                          percentage === 100 ? 'text-secondary' : 'text-primary'
+                        }`}
+                      >
                         {percentage === 100 ? 'check_circle' : 'verified'}
                       </span>
                       {percentage === 100 ? 'Hoàn thành 100% kế hoạch tháng' : `Hoàn tất ${percentage}% số buổi`}
                     </span>
-                    <span className="font-semibold text-primary">
-                      {remainingSessions === 0 ? 'Sẵn sàng xuất hóa đơn' : `Còn ${remainingSessions} buổi`}
-                    </span>
+                    <span className="font-semibold text-primary">{percentage}%</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-surface-container overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         percentage === 100 ? 'bg-secondary' : 'bg-primary'
                       }`}
-                      style={{ width: `${percentage}%` }}
-                    ></div>
+                      style={{ width: `${Math.min(100, percentage)}%` }}
+                    />
                   </div>
                 </div>
 
-                {/* Specific Notes & Highlights */}
-                {student.note && (
-                  <div className="p-2.5 rounded-xl bg-tertiary-fixed/40 flex items-start gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-tertiary flex-shrink-0 mt-0.5">sticky_note_2</span>
-                    <p className="font-body-sm text-body-sm text-on-tertiary-fixed leading-snug">
-                      <strong>Ghi chú:</strong> {student.note}
-                    </p>
+                {/* Card Footer Info: Contact & Action Links */}
+                <div className="flex items-center justify-between pt-2 border-t border-surface-container text-body-sm text-body-sm text-on-surface-variant">
+                  <div className="flex items-center gap-1 truncate text-xs">
+                    <span className="material-symbols-outlined text-[15px] text-outline">person</span>
+                    <span>PH: {student.parentName}</span>
+                    <span className="text-outline">•</span>
+                    <span className="font-mono">{student.parentPhone}</span>
                   </div>
-                )}
 
-                {student.goal && (
-                  <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
-                    <span className="material-symbols-outlined text-[16px] text-tertiary flex-shrink-0">flag</span>
-                    <span className="text-on-surface truncate">Mục tiêu: {student.goal}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      className="text-primary font-label-md text-label-md flex items-center gap-0.5 hover:underline font-bold text-xs"
+                      type="button"
+                      onClick={() => onEditStudent(student)}
+                    >
+                      <span className="material-symbols-outlined text-[15px]">edit</span>
+                      Sửa
+                    </button>
+                    <button
+                      className="text-primary font-label-md text-label-md flex items-center gap-0.5 hover:underline font-bold text-xs"
+                      type="button"
+                      onClick={() => onOpenStudentDetail(student)}
+                    >
+                      Chi tiết
+                      <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                    </button>
                   </div>
-                )}
-
-                {/* Footer and Parent Meta */}
-                <div className="pt-1 flex items-center justify-between gap-2 border-t border-surface-container/50 text-on-surface-variant font-body-sm text-body-sm">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <span className="material-symbols-outlined text-[16px] text-outline flex-shrink-0">contacts</span>
-                    <span className="truncate">PH: <strong className="text-on-surface font-semibold">{student.parentName}</strong> ({student.parentPhone})</span>
-                  </div>
-                  <button
-                    className="text-primary font-label-md text-label-md flex items-center gap-0.5 hover:underline flex-shrink-0 active:scale-95"
-                    type="button"
-                    onClick={() => onOpenStudentDetail(student)}
-                  >
-                    Chi tiết
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                  </button>
                 </div>
               </article>
             );
@@ -320,33 +383,61 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
 
         {/* Empty State when no results */}
         {filteredStudents.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl bg-surface-container-lowest border border-surface-container-high/50 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline mb-3">
-              <span className="material-symbols-outlined text-[32px]">person_search</span>
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl bg-surface-container-lowest border border-surface-container-high/50 shadow-sm space-y-3">
+            <div className="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-1">
+              <span className="material-symbols-outlined text-[32px]">school</span>
             </div>
-            <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">Không tìm thấy học sinh</h3>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-xs">
-              Vui lòng kiểm tra lại từ khóa hoặc chuyển sang tab bộ lọc khác.
+            <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+              {students.length === 0 ? 'Chưa có lớp học nào' : 'Không tìm thấy lớp phù hợp'}
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-xs text-xs">
+              {students.length === 0
+                ? 'Bạn đã xóa hết các lớp cũ. Hãy thêm lớp mới để bắt đầu quản lý lịch dạy và học phí!'
+                : 'Vui lòng kiểm tra lại từ khóa tìm kiếm hoặc chuyển sang bộ lọc khác.'}
             </p>
-            <button
-              className="mt-4 px-4 py-2.5 rounded-xl bg-surface-container text-primary font-label-lg text-label-lg hover:bg-surface-container-high transition-colors font-bold"
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setActiveFilter('all');
-              }}
-            >
-              Đặt lại bộ lọc
-            </button>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+              <button
+                className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg hover:bg-primary-container transition-all font-bold shadow-md active:scale-95 flex items-center gap-1.5"
+                type="button"
+                onClick={onOpenCreateClass}
+              >
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                <span>Thêm lớp mới ngay</span>
+              </button>
+
+              {students.length === 0 && onResetMockStudents && (
+                <button
+                  className="px-4 py-2.5 rounded-xl bg-surface-container text-on-surface font-label-lg text-label-lg hover:bg-surface-container-high transition-colors font-bold text-xs"
+                  type="button"
+                  onClick={onResetMockStudents}
+                >
+                  Khôi phục lớp mẫu
+                </button>
+              )}
+
+              {students.length > 0 && (
+                <button
+                  className="px-4 py-2.5 rounded-xl bg-surface-container text-primary font-label-lg text-label-lg hover:bg-surface-container-high transition-colors font-bold text-xs"
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveFilter('all');
+                  }}
+                >
+                  Đặt lại bộ lọc
+                </button>
+              )}
+            </div>
           </div>
         )}
       </section>
 
       {/* Floating Action Button (FAB) */}
-      <div className="fixed bottom-20 right-4 z-40 max-w-xl mx-auto">
+      <div className="fixed bottom-24 right-4 z-40">
         <button
           aria-label="Thêm học sinh mới"
-          className="flex items-center gap-2 h-14 pl-4 pr-5 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg shadow-xl shadow-primary-container/30 hover:bg-primary active:scale-95 transition-all ring-4 ring-white/50"
+          className="flex items-center gap-2 h-14 pl-4 pr-5 rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg shadow-2xl shadow-primary-container/40 hover:bg-primary active:scale-95 transition-all ring-4 ring-white/70"
           type="button"
           onClick={onOpenCreateClass}
         >
@@ -354,6 +445,46 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
           <span className="tracking-wide font-bold">Thêm học sinh</span>
         </button>
       </div>
+
+      {/* IN-VIEW DELETE CONFIRMATION DIALOG (No window.confirm!) */}
+      {studentToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-sm bg-surface p-5 rounded-3xl shadow-2xl border border-surface-container space-y-4 animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-2xl bg-error-container text-on-error-container flex items-center justify-center mx-auto shadow-sm">
+              <span className="material-symbols-outlined text-[30px]">delete_forever</span>
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">
+                Xóa lớp {studentToDelete.subject}?
+              </h3>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Bạn có chắc chắn muốn xóa lớp của em <strong>{studentToDelete.name}</strong> không? Sau khi xóa, bạn có thể tự tạo lại lớp mới bất cứ lúc nào.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                className="flex-1 h-12 rounded-xl bg-surface-container text-on-surface font-bold text-xs hover:bg-surface-container-high transition-colors"
+                onClick={() => setStudentToDelete(null)}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                className="flex-1 h-12 rounded-xl bg-error text-on-error font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all hover:opacity-90"
+                onClick={() => {
+                  if (onDeleteStudent) onDeleteStudent(studentToDelete.id);
+                  onShowToast(`Đã xóa vĩnh viễn lớp của em ${studentToDelete.name}!`);
+                  setStudentToDelete(null);
+                }}
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+                <span>Xóa ngay</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
-import { ClassSession, Student, Invoice, PaymentReceipt } from '../types';
+import { ClassSession, Student, Invoice, PaymentReceipt, TutorProfile } from '../types';
 
-export const TUTOR_PROFILE = {
+export const TUTOR_PROFILE: TutorProfile = {
   name: 'Thầy Tuấn Anh',
   fullName: 'Nguyễn Tuấn Anh',
   title: 'Gia sư Chuyên Toán - Lý - Hóa',
@@ -8,7 +8,7 @@ export const TUTOR_PROFILE = {
   heroAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAJg-Tt_lzDzDQMbchUCKqiUe4swbuXO01avPke9sizjumaEQx1draN8mrdmOxz5s0gbEzHAS6CdF6GlycCGoHhMpYjLfLjH9Sk1Vbp6Ib7yQtJd8rC5PEZoylnW5Nimps0VXzM-GYtQAmhC5bxGAeBBwK0tRMQobSjZvXiLkBAux67fo_JypJJZGz8CpZcs9SQd9XN3ablTcMhhuMCqFcs-KWVdMaXmDV12ClZLXvCHvbmV9zRz_y',
   logoUrl: 'https://lh3.googleusercontent.com/aida/AEtjO1Vr_OeXhw6M8wfn-WBY9LEtd1GwgINvXflbWnWjF0Xbf1FV_S9Oby7UWZ1sgCassN5TkpeHrZdTMBe5nMRgTD3WuWnRF3xTOyxKvnDydQin4_2XG8unYmp4ym4TtT0UkQe74y7r52d8HLNYMgeRxjMuKHxpC4JLd8-wOuhS_3l94TMTnP3n4tmI3GKfCoZU6oKJ7JUVM3aqWf5wSmLXbhaPbIMr5mWAgZXmQb8t4q9DOdEztHLtupS_sA',
   bankName: 'MB Bank (Quân Đội) - CN Ba Đình',
-  bankShort: 'MBBank',
+  bankCode: 'MB',
   accountNumber: '0988 123 456',
   accountNumberRaw: '0988123456',
   accountHolder: 'NGUYEN TUAN ANH',

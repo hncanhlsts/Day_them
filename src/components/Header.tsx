@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { TUTOR_PROFILE } from '../data/mockData';
-import { TabType } from '../types';
+import { TabType, TutorProfile } from '../types';
 
 interface HeaderProps {
   currentTab: TabType;
+  tutorProfile?: TutorProfile;
+  onOpenEditProfile?: () => void;
   onShowToast: (msg: string) => void;
   onOpenCreateClass: () => void;
+  onOpenAppsScript?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenCreateClass }) => {
+export const Header: React.FC<HeaderProps> = ({
+  currentTab,
+  tutorProfile,
+  onOpenEditProfile,
+  onShowToast,
+  onOpenCreateClass,
+  onOpenAppsScript,
+}) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const tutor = tutorProfile || TUTOR_PROFILE;
 
   const getTabLabel = (tab: TabType) => {
     switch (tab) {
@@ -45,7 +56,19 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenC
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
+            {/* Google Apps Script & Sheets Quick Trigger */}
+            <button
+              aria-label="Google Apps Script & Sheets"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-secondary-container/80 text-on-secondary-container hover:bg-secondary-container transition-all text-[11px] font-bold shadow-xs active:scale-95"
+              type="button"
+              onClick={onOpenAppsScript}
+              title="Google Apps Script & Sheets"
+            >
+              <span className="material-symbols-outlined text-[16px]">terminal</span>
+              <span className="hidden sm:inline">Apps Script</span>
+            </button>
+
             {/* Notification Bell */}
             <div className="relative">
               <button 
@@ -114,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenC
                 <img 
                   alt="Profile" 
                   className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" 
-                  src={TUTOR_PROFILE.avatarUrl}
+                  src={tutor.avatarUrl}
                 />
               </button>
 
@@ -125,25 +148,25 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenC
                     <img 
                       alt="Tutor" 
                       className="w-12 h-12 rounded-full object-cover shadow-sm" 
-                      src={TUTOR_PROFILE.heroAvatarUrl}
+                      src={tutor.heroAvatarUrl || tutor.avatarUrl}
                     />
                     <div className="min-w-0">
-                      <p className="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{TUTOR_PROFILE.fullName}</p>
-                      <p className="font-body-sm text-body-sm text-primary truncate">{TUTOR_PROFILE.title}</p>
+                      <p className="font-headline-sm text-headline-sm text-on-surface font-bold truncate">{tutor.fullName || tutor.name}</p>
+                      <p className="font-body-sm text-body-sm text-primary truncate">{tutor.title}</p>
                     </div>
                   </div>
 
                   <div className="py-2.5 flex flex-col gap-2">
                     <div className="bg-surface-container-low p-2.5 rounded-xl">
                       <span className="font-label-sm text-label-sm text-on-surface-variant block">Tài khoản VietQR thụ hưởng:</span>
-                      <p className="font-label-md text-label-md text-on-surface font-bold mt-0.5">{TUTOR_PROFILE.bankName}</p>
+                      <p className="font-label-md text-label-md text-on-surface font-bold mt-0.5">{tutor.bankName}</p>
                       <div className="flex items-center justify-between mt-1 text-primary">
-                        <span className="font-mono font-bold text-[14px]">{TUTOR_PROFILE.accountNumber}</span>
+                        <span className="font-mono font-bold text-[14px]">{tutor.accountNumber}</span>
                         <button 
                           className="text-xs hover:underline"
                           onClick={() => {
-                            navigator.clipboard?.writeText(TUTOR_PROFILE.accountNumberRaw);
-                            onShowToast('Đã sao chép số tài khoản MBBank!');
+                            navigator.clipboard?.writeText(tutor.accountNumberRaw);
+                            onShowToast(`Đã sao chép số tài khoản ${tutor.accountNumberRaw}!`);
                           }}
                         >
                           Sao chép
@@ -153,6 +176,16 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenC
                   </div>
 
                   <div className="pt-2 border-t border-surface-container flex flex-col gap-1.5">
+                    <button 
+                      className="w-full text-left py-2 px-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container flex items-center gap-2 font-bold shadow-xs active:scale-95 transition-all"
+                      onClick={() => {
+                        setShowProfile(false);
+                        onOpenEditProfile?.();
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">manage_accounts</span>
+                      <span>Đổi tên &amp; Cài đặt QR Bank</span>
+                    </button>
                     <button 
                       className="w-full text-left py-2 px-2.5 rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container flex items-center gap-2"
                       onClick={() => {
@@ -167,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab, onShowToast, onOpenC
                       className="w-full text-left py-2 px-2.5 rounded-lg text-on-surface-variant font-label-md text-label-md hover:bg-surface-container flex items-center gap-2"
                       onClick={() => {
                         setShowProfile(false);
-                        onShowToast('Đã lưu dữ liệu tự động vào thiết bị.');
+                        onShowToast('Dữ liệu đã tự động đồng bộ trên thiết bị của bạn!');
                       }}
                     >
                       <span className="material-symbols-outlined text-[18px]">sync</span>
