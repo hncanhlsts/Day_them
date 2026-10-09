@@ -1,0 +1,7 @@
+{
+  "name": "Gia Sư Pro - Lịch Dạy & Học Phí VietQR",
+  "description": "Quản lý lịch dạy gia sư, điểm danh, nhận xét sư phạm và tạo phiếu thu học phí VietQR tự động.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
